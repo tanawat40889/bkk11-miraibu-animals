@@ -10,7 +10,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;cursor:pointer}
-#emo{font-size:min(78vw,68vh);line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+#emo{width:min(78vw,68vh);height:min(78vw,68vh);object-fit:contain}
 #emo.pop{animation:pop .45s}
 @keyframes pop{0%{transform:scale(.3) rotate(-15deg)}70%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1)}}
 #go{font-size:min(14vw,12vh);line-height:1;border:0;border-radius:999px;padding:.2em .9em;background:#ff8a00;box-shadow:0 .06em 0 #0003;cursor:pointer}
@@ -18,15 +18,15 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 </style>
 </head>
 <body>
-<div id="emo">🐾</div>
+<img id="emo" alt="" src="img/1f43e.svg">
 <button id="go" aria-label="สุ่ม">🎲</button>
 <script>
-const A="🦁🐘🦒🦓🐵🐯🐻🐼🦘🐨🦛🦏🐪🦍🐧🦉🦚🦜🦩🐊🐢🐍🐸🐋🐬🦈🐙🦀🦋🐝🐺🦊🐰🦌🦥🦦🦔🦭🦅🐿️".match(/\p{Extended_Pictographic}️?/gu);
+const A=["1f981", "1f418", "1f992", "1f993", "1f435", "1f42f", "1f43b", "1f43c", "1f998", "1f428", "1f99b", "1f98f", "1f42a", "1f98d", "1f427", "1f989", "1f99a", "1f99c", "1f9a9", "1f40a", "1f422", "1f40d", "1f438", "1f40b", "1f42c", "1f988", "1f419", "1f980", "1f98b", "1f41d", "1f43a", "1f98a", "1f430", "1f98c", "1f9a5", "1f9a6", "1f994", "1f9ad", "1f985", "1f43f"];
 let deck=[],last=null;
 const e=document.getElementById('emo');
 function next(){
   if(!deck.length){deck=A.slice().sort(()=>Math.random()-.5);if(deck[deck.length-1]===last)deck.reverse()}
-  last=deck.pop();e.textContent=last;
+  last=deck.pop();e.src='img/'+last+'.svg';
   e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop');
 }
 document.body.onclick=next;
