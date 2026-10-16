@@ -9,28 +9,107 @@
 @media (prefers-color-scheme:dark){:root{--bg:#1d1a14}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;cursor:pointer}
-#emo{width:min(78vw,68vh);height:min(78vw,68vh);object-fit:contain}
-#emo.pop{animation:pop .45s}
-@keyframes pop{0%{transform:scale(.3) rotate(-15deg)}70%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1)}}
-#go{font-size:min(14vw,12vh);line-height:1;border:0;border-radius:999px;padding:.2em .9em;background:#ff8a00;box-shadow:0 .06em 0 #0003;cursor:pointer}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;cursor:pointer;transition:background .15s}
+body.flash{background:#fff}
+body.spin{background:#2b1b5a}
+#rays{position:fixed;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;border-radius:50%;opacity:0;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,#ffd23f 0 8deg,#ff8a00 8deg 16deg);transition:opacity .3s;animation:rot 6s linear infinite}
+#rays.on{opacity:.55}
+@keyframes rot{to{transform:rotate(360deg)}}
+#emo{position:relative;z-index:2;width:min(78vw,66vh);height:min(78vw,66vh);object-fit:contain;filter:drop-shadow(0 1.5vh 2vh #0004)}
+#emo.spinning{animation:jig .12s infinite}
+@keyframes jig{0%{transform:translate(-1.2vw,0) rotate(-4deg) scale(.92)}50%{transform:translate(1.2vw,-1vh) rotate(4deg) scale(1)}100%{transform:translate(-1.2vw,0) rotate(-4deg) scale(.92)}}
+#emo.boom{animation:boom .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes boom{0%{transform:scale(.2) rotate(-30deg)}55%{transform:scale(1.25) rotate(8deg)}75%{transform:scale(.95) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+#go{position:relative;z-index:2;font-size:min(14vw,12vh);line-height:1;border:0;border-radius:999px;padding:.2em .9em;background:#ff8a00;box-shadow:0 .06em 0 #0003;cursor:pointer;animation:beat 1.2s infinite}
 #go:active{transform:translateY(.05em);box-shadow:none}
+body.spin #go{animation:none;opacity:.5}
+@keyframes beat{50%{transform:scale(1.1)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#mute{position:fixed;right:12px;top:12px;z-index:4;font-size:28px;background:none;border:0;cursor:pointer;opacity:.6}
 </style>
 </head>
 <body>
+<div id="rays"></div>
 <img id="emo" alt="" src="img/1f43e.svg">
 <button id="go" aria-label="สุ่ม">🎲</button>
+<button id="mute" aria-label="เสียง">🔊</button>
+<canvas id="fx"></canvas>
 <script>
-const A=["1f981", "1f418", "1f992", "1f993", "1f435", "1f42f", "1f43b", "1f43c", "1f998", "1f428", "1f99b", "1f98f", "1f42a", "1f98d", "1f427", "1f989", "1f99a", "1f99c", "1f9a9", "1f40a", "1f422", "1f40d", "1f438", "1f40b", "1f42c", "1f988", "1f419", "1f980", "1f98b", "1f41d", "1f43a", "1f98a", "1f430", "1f98c", "1f9a5", "1f9a6", "1f994", "1f9ad", "1f985", "1f43f"];
-let deck=[],last=null;
-const e=document.getElementById('emo');
-function next(){
-  if(!deck.length){deck=A.slice().sort(()=>Math.random()-.5);if(deck[deck.length-1]===last)deck.reverse()}
-  last=deck.pop();e.src='img/'+last+'.svg';
-  e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop');
+const A=["1f981","1f418","1f992","1f993","1f435","1f42f","1f43b","1f43c","1f998","1f428","1f99b","1f98f","1f42a","1f98d","1f427","1f989","1f99a","1f99c","1f9a9","1f40a","1f422","1f40d","1f438","1f40b","1f42c","1f988","1f419","1f980","1f98b","1f41d","1f43a","1f98a","1f430","1f98c","1f9a5","1f9a6","1f994","1f9ad","1f985","1f43f"];
+A.forEach(c=>{new Image().src='img/'+c+'.svg'}); // preload
+const $=id=>document.getElementById(id);
+const e=$('emo'),cv=$('fx'),cx=cv.getContext('2d');
+let deck=[],last=null,busy=false,muted=false,ac=null,parts=[],raf=0;
+
+/* ---------- sound ---------- */
+function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(_){}}if(ac&&ac.state==='suspended')ac.resume();return ac}
+function tone(f,t0,d,type='square',v=.12){
+  if(muted||!ac)return;const o=ac.createOscillator(),g=ac.createGain();
+  o.type=type;o.frequency.value=f;o.connect(g);g.connect(ac.destination);
+  const t=ac.currentTime+t0;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d+.02);
 }
-document.body.onclick=next;
-document.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='Enter'||ev.key==='ArrowRight'){ev.preventDefault();next()}});
+const tick=p=>tone(300+p*700,0,.05,'square',.09);
+function fanfare(){[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,i*.09,.28,'triangle',.18));tone(2093,.7,.5,'sine',.1)}
+
+/* ---------- confetti ---------- */
+function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio}
+addEventListener('resize',fit);fit();
+function burst(){
+  const d=devicePixelRatio,W=cv.width,H=cv.height,cols=['#ff4d6d','#ffd23f','#3bceac','#4cc9f0','#b388ff','#ff8a00'];
+  for(let i=0;i<220;i++){
+    const a=Math.random()*Math.PI*2,s=(6+Math.random()*16)*d;
+    parts.push({x:W/2,y:H*.45,vx:Math.cos(a)*s,vy:Math.sin(a)*s-8*d,w:(6+Math.random()*8)*d,h:(10+Math.random()*10)*d,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:1});
+  }
+  if(!raf)raf=requestAnimationFrame(draw);
+}
+function draw(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts=parts.filter(p=>p.life>0&&p.y<cv.height+50);
+  for(const p of parts){
+    p.vy+=.55*devicePixelRatio;p.vx*=.992;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life-=.004;
+    cx.save();cx.globalAlpha=Math.max(p.life,0);cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore();
+  }
+  raf=parts.length?requestAnimationFrame(draw):0;
+}
+
+/* ---------- spin ---------- */
+function pick(){
+  if(!deck.length){deck=A.slice().sort(()=>Math.random()-.5);if(deck[deck.length-1]===last)deck.reverse()}
+  return deck.pop();
+}
+function show(c){e.src='img/'+c+'.svg'}
+function spin(){
+  if(busy)return;busy=true;audio();
+  const final=pick();
+  document.body.classList.add('spin');document.body.classList.remove('flash');
+  $('rays').classList.remove('on');
+  e.className='spinning';
+  let d=45,t=0,shown=last,total=2900,n=0;
+  (function step(){
+    t+=d;n++;
+    if(t<total){
+      let c;do{c=A[Math.floor(Math.random()*A.length)]}while(c===shown||c===final);
+      shown=c;show(c);tick(t/total);
+      d*=1.13;setTimeout(step,d);
+    }else reveal(final);
+  })();
+}
+function reveal(c){
+  last=c;show(c);
+  document.body.classList.remove('spin');document.body.classList.add('flash');
+  setTimeout(()=>document.body.classList.remove('flash'),180);
+  e.className='';void e.offsetWidth;e.className='boom';
+  $('rays').classList.add('on');
+  fanfare();burst();
+  if(navigator.vibrate)navigator.vibrate([60,40,120]);
+  setTimeout(()=>{busy=false},2500);
+  setTimeout(()=>$('rays').classList.remove('on'),4500);
+}
+
+document.body.onclick=ev=>{if(ev.target.id!=='mute')spin()};
+document.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='Enter'||ev.key==='ArrowRight'){ev.preventDefault();spin()}});
+$('mute').onclick=ev=>{ev.stopPropagation();muted=!muted;$('mute').textContent=muted?'🔇':'🔊'};
 </script>
 </body>
 </html>
