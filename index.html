@@ -5,148 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>สุ่มสัตว์</title>
 <style>
-:root{--bg:#fff7e0;--card:#fff;--ink:#3b2a1a;--acc:#ff8a00;--acc2:#2bb673;--mute:#8a7a66}
-@media (prefers-color-scheme:dark){:root{--bg:#1d1a14;--card:#2a261d;--ink:#fff3dc;--mute:#b5a78f}}
+:root{--bg:#fff7e0}
+@media (prefers-color-scheme:dark){:root{--bg:#1d1a14}}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Sarabun","Noto Sans Thai",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:16px}
-h1{margin:8px 0 4px;font-size:clamp(1.6rem,5vw,2.4rem)}
-.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;color:var(--mute);font-size:1rem}
-.card{background:var(--card);border-radius:28px;box-shadow:0 8px 28px #0002;width:min(560px,100%);margin:16px 0;padding:24px 20px;text-align:center;min-height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer}
-.emo{font-size:clamp(7rem,32vw,12rem);line-height:1;transition:transform .2s}
-.emo.pop{animation:pop .45s}
-@keyframes pop{0%{transform:scale(.3) rotate(-15deg)}70%{transform:scale(1.15) rotate(4deg)}100%{transform:scale(1)}}
-.th{font-size:clamp(2.2rem,9vw,3.4rem);font-weight:800}
-.en{font-size:1.4rem;color:var(--mute)}
-.tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.tag{background:var(--bg);border-radius:999px;padding:4px 14px;font-size:1.05rem}
-.fact{font-size:1.2rem;max-width:30ch}
-.hide{visibility:hidden}
-.hint{font-size:1.5rem;color:var(--mute)}
-button{font:inherit;border:0;border-radius:999px;padding:14px 28px;font-size:1.3rem;font-weight:700;color:#fff;background:var(--acc);cursor:pointer;box-shadow:0 4px 0 #0003}
-button:active{transform:translateY(3px);box-shadow:none}
-button.big{font-size:2rem;padding:18px 48px}
-button.alt{background:var(--acc2)}
-button.ghost{background:var(--card);color:var(--ink)}
-@media (min-width:900px){
-  h1{font-size:3.2rem}.bar{font-size:1.4rem}
-  .card{width:min(1100px,92vw);min-height:62vh}
-  .emo{font-size:clamp(12rem,32vh,22rem)}
-  .th{font-size:clamp(4rem,10vh,7rem)}.en{font-size:2.2rem}
-  .tag{font-size:1.6rem;padding:6px 22px}.fact{font-size:2rem;max-width:40ch}
-  button{font-size:1.8rem}button.big{font-size:2.8rem;padding:22px 72px}
-}
-.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-label{display:flex;gap:6px;align-items:center;cursor:pointer}
-input[type=checkbox]{width:22px;height:22px}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;cursor:pointer}
+#emo{font-size:min(78vw,68vh);line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+#emo.pop{animation:pop .45s}
+@keyframes pop{0%{transform:scale(.3) rotate(-15deg)}70%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1)}}
+#go{font-size:min(14vw,12vh);line-height:1;border:0;border-radius:999px;padding:.2em .9em;background:#ff8a00;box-shadow:0 .06em 0 #0003;cursor:pointer}
+#go:active{transform:translateY(.05em);box-shadow:none}
 </style>
 </head>
 <body>
-<h1>🐾 สุ่มสัตว์ 🐾</h1>
-<div class="bar">
-  <span id="cnt">0 / 40</span>
-  <label><input type="checkbox" id="guess"> โหมดทายสัตว์</label>
-  <label><input type="checkbox" id="snd" checked> เสียงอ่านชื่อ</label>
-</div>
-
-<div class="card" id="card" role="button" tabindex="0" aria-label="แตะเพื่อดูชื่อ">
-  <div class="emo" id="emo">❓</div>
-  <div class="th" id="th">กดปุ่มเพื่อสุ่ม!</div>
-  <div class="en" id="en"></div>
-  <div class="tags" id="tags"></div>
-  <div class="fact" id="fact"></div>
-</div>
-
-<div class="row">
-  <button class="big" id="go">🎲 สุ่ม!</button>
-  <button class="ghost" id="rst">เริ่มใหม่</button>
-</div>
-
+<div id="emo">🐾</div>
+<button id="go" aria-label="สุ่ม">🎲</button>
 <script>
-// th, en, emoji, type, diet, habitat, fact
-const A=[
-["สิงโต","Lion","🦁","สัตว์เลี้ยงลูกด้วยนม","กินเนื้อ","ทุ่งหญ้าสะวันนา","ตัวผู้มีแผงคอ และเสียงคำรามได้ยินไกลหลายกิโลเมตร"],
-["ช้าง","Elephant","🐘","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ป่าและทุ่งหญ้า","ใช้งวงดื่มน้ำ หยิบของ และทักทายเพื่อนได้"],
-["ยีราฟ","Giraffe","🦒","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ทุ่งหญ้าสะวันนา","คอยาวมาก เลยกินใบไม้บนยอดไม้สูงๆ ได้"],
-["ม้าลาย","Zebra","🦓","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ทุ่งหญ้าสะวันนา","ลายของม้าลายแต่ละตัวไม่เหมือนกันเลย"],
-["ลิง","Monkey","🐵","สัตว์เลี้ยงลูกด้วยนม","กินผลไม้และพืช","ป่าฝน","ชอบปีนต้นไม้ และกินกล้วยเก่ง"],
-["เสือ","Tiger","🐯","สัตว์เลี้ยงลูกด้วยนม","กินเนื้อ","ป่า","แมวตัวใหญ่ที่สุดในโลก ตัวมีลายทางสวยๆ"],
-["หมี","Bear","🐻","สัตว์เลี้ยงลูกด้วยนม","กินทั้งพืชและเนื้อ","ป่า","ชอบน้ำผึ้ง และนอนหลับยาวในฤดูหนาว"],
-["แพนด้า","Panda","🐼","สัตว์เลี้ยงลูกด้วยนม","กินไผ่","ป่าไผ่ในประเทศจีน","กินไผ่เกือบทั้งวัน เป็นสัตว์ขาวดำน่ารัก"],
-["จิงโจ้","Kangaroo","🦘","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ออสเตรเลีย","กระโดดไกลได้ และมีกระเป๋าหน้าท้องไว้อุ้มลูก"],
-["โคอาล่า","Koala","🐨","สัตว์เลี้ยงลูกด้วยนม","กินใบยูคาลิปตัส","ออสเตรเลีย","นอนหลับวันละประมาณ 20 ชั่วโมง"],
-["ฮิปโป","Hippo","🦛","สัตว์เลี้ยงลูกด้วยนม","กินพืช","แม่น้ำในแอฟริกา","ชอบแช่น้ำ ปากอ้าได้กว้างมาก"],
-["แรด","Rhino","🦏","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ทุ่งหญ้าและป่า","มีนอบนจมูก และผิวหนังหนามาก"],
-["อูฐ","Camel","🐪","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ทะเลทราย","มีหนอก เดินในทะเลทรายได้ไกลโดยไม่ต้องกินน้ำ"],
-["กอริลล่า","Gorilla","🦍","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ป่าแอฟริกา","ตัวใหญ่แข็งแรง แต่ใจดีและชอบอยู่เป็นครอบครัว"],
-["เพนกวิน","Penguin","🐧","นก","กินปลา","ขั้วโลกใต้","เป็นนกที่บินไม่ได้ แต่ว่ายน้ำเก่งมาก"],
-["นกฮูก","Owl","🦉","นก","กินเนื้อ","ป่า","หันหัวได้เกือบรอบ และออกหากินตอนกลางคืน"],
-["นกยูง","Peacock","🦚","นก","กินพืชและแมลง","ป่า","ตัวผู้รำแพนหางสวยงามมาก"],
-["นกแก้ว","Parrot","🦜","นก","กินผลไม้และเมล็ดพืช","ป่าฝน","พูดเลียนเสียงคนได้ มีขนสีสดใส"],
-["ฟลามิงโก","Flamingo","🦩","นก","กินสาหร่ายและกุ้งเล็ก","ทะเลสาบ","ขนสีชมพู ชอบยืนขาเดียว"],
-["จระเข้","Crocodile","🐊","สัตว์เลื้อยคลาน","กินเนื้อ","แม่น้ำและหนอง","ปากกว้าง ฟันแหลม ชอบนอนอาบแดด"],
-["เต่า","Turtle","🐢","สัตว์เลื้อยคลาน","กินพืช","บกและทะเล","มีกระดองไว้ซ่อนตัว และเดินช้าๆ"],
-["งู","Snake","🐍","สัตว์เลื้อยคลาน","กินเนื้อ","หลายที่","ไม่มีขา เลื้อยไปมา และลอกคราบได้"],
-["กบ","Frog","🐸","สัตว์สะเทินน้ำสะเทินบก","กินแมลง","บ่อน้ำ","ตอนเด็กเป็นลูกอ๊อด โตแล้วกระโดดเก่ง"],
-["วาฬ","Whale","🐋","สัตว์เลี้ยงลูกด้วยนม","กินแพลงก์ตอนและปลา","มหาสมุทร","สัตว์ที่ตัวใหญ่ที่สุดในโลก และพ่นน้ำจากหัวได้"],
-["โลมา","Dolphin","🐬","สัตว์เลี้ยงลูกด้วยนม","กินปลา","ทะเล","ฉลาดมาก ชอบกระโดดและเล่นน้ำ"],
-["ฉลาม","Shark","🦈","ปลา","กินเนื้อ","ทะเล","ฟันเยอะมาก และเปลี่ยนฟันใหม่ได้เรื่อยๆ"],
-["ปลาหมึก","Octopus","🐙","สัตว์ทะเล","กินปู กุ้ง","ทะเล","มี 8 แขน และเปลี่ยนสีพรางตัวได้"],
-["ปู","Crab","🦀","สัตว์ทะเล","กินพืชและสัตว์เล็ก","ชายหาด","มีก้ามใหญ่ และเดินด้านข้าง"],
-["ผีเสื้อ","Butterfly","🦋","แมลง","ดื่มน้ำหวานดอกไม้","สวนและป่า","เริ่มจากหนอน กลายเป็นดักแด้ แล้วเป็นผีเสื้อ"],
-["ผึ้ง","Bee","🐝","แมลง","ดื่มน้ำหวานดอกไม้","สวนและป่า","ช่วยผสมเกสร และทำน้ำผึ้งแสนอร่อย"],
-["หมาป่า","Wolf","🐺","สัตว์เลี้ยงลูกด้วยนม","กินเนื้อ","ป่า","อยู่เป็นฝูง และหอนเรียกเพื่อนๆ"],
-["จิ้งจอก","Fox","🦊","สัตว์เลี้ยงลูกด้วยนม","กินทั้งพืชและเนื้อ","ป่าและทุ่งหญ้า","หางฟูๆ ฉลาดและว่องไว"],
-["กระต่าย","Rabbit","🐰","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ทุ่งหญ้า","หูยาว กระโดดเก่ง ชอบกินแครอท"],
-["กวาง","Deer","🦌","สัตว์เลี้ยงลูกด้วยนม","กินพืช","ป่า","ตัวผู้มีเขาแตกกิ่งก้านสวยงาม"],
-["สลอธ","Sloth","🦥","สัตว์เลี้ยงลูกด้วยนม","กินใบไม้","ป่าฝน","เคลื่อนไหวช้ามาก และห้อยอยู่บนต้นไม้"],
-["นาก","Otter","🦦","สัตว์เลี้ยงลูกด้วยนม","กินปลา","แม่น้ำและทะเล","ว่ายน้ำเก่ง ชอบเล่นสนุก"],
-["เม่น","Hedgehog","🦔","สัตว์เลี้ยงลูกด้วยนม","กินแมลง","ป่าและสวน","มีหนามเต็มตัว ม้วนตัวเป็นลูกบอลได้"],
-["แมวน้ำ","Seal","🦭","สัตว์เลี้ยงลูกด้วยนม","กินปลา","ทะเลเย็น","ว่ายน้ำเก่ง และชอบนอนบนก้อนน้ำแข็ง"],
-["นกอินทรี","Eagle","🦅","นก","กินเนื้อ","ภูเขา","บินสูง ตาดีมาก มองเห็นไกล"],
-["กระรอก","Squirrel","🐿️","สัตว์เลี้ยงลูกด้วยนม","กินถั่วและผลไม้","ป่า","ชอบเก็บถั่วไว้กิน และปีนต้นไม้เก่ง"]
-].map(([th,en,e,type,diet,hab,fact])=>({th,en,e,type,diet,hab,fact}));
-
-const $=id=>document.getElementById(id);
-let deck=[],cur=null,seen=0,revealed=true;
-
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function say(t){
-  if(!$('snd').checked||!window.speechSynthesis)return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t);u.lang='th-TH';u.rate=.85;speechSynthesis.speak(u);
-}
-function show(){
-  const a=cur;
-  $('emo').textContent=a.e;
-  $('emo').classList.remove('pop');void $('emo').offsetWidth;$('emo').classList.add('pop');
-  $('th').textContent=a.th;$('en').textContent=a.en;
-  $('tags').innerHTML=[a.type,a.diet,a.hab].map(t=>`<span class="tag">${t}</span>`).join('');
-  $('fact').textContent=a.fact;
-  setRevealed(!$('guess').checked);
-}
-function setRevealed(v){
-  revealed=v;
-  ['th','en','tags','fact'].forEach(i=>$(i).classList.toggle('hide',!v));
-  if(!v){$('th').classList.remove('hide');$('th').textContent='? ? ?';$('en').textContent='แตะเพื่อดูคำตอบ'}
-  else{$('th').textContent=cur.th;$('en').textContent=cur.en;say(cur.th)}
-}
+const A="🦁🐘🦒🦓🐵🐯🐻🐼🦘🐨🦛🦏🐪🦍🐧🦉🦚🦜🦩🐊🐢🐍🐸🐋🐬🦈🐙🦀🦋🐝🐺🦊🐰🦌🦥🦦🦔🦭🦅🐿️".match(/\p{Extended_Pictographic}️?/gu);
+let deck=[],last=null;
+const e=document.getElementById('emo');
 function next(){
-  if(!deck.length){deck=shuffle(A.slice());seen=0}
-  cur=deck.pop();seen++;
-  $('cnt').textContent=`${seen} / ${A.length}`;
-  show();
+  if(!deck.length){deck=A.slice().sort(()=>Math.random()-.5);if(deck[deck.length-1]===last)deck.reverse()}
+  last=deck.pop();e.textContent=last;
+  e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop');
 }
-function reset(){deck=[];seen=0;cur=null;$('cnt').textContent=`0 / ${A.length}`;
-  $('emo').textContent='❓';$('th').textContent='กดปุ่มเพื่อสุ่ม!';$('en').textContent='';$('tags').innerHTML='';$('fact').textContent='';
-  ['th','en','tags','fact'].forEach(i=>$(i).classList.remove('hide'))}
-function tap(){if(cur&&!revealed)setRevealed(true);else if(!cur)next()}
-
-$('go').onclick=next;
-$('rst').onclick=reset;
-$('card').onclick=tap;
-$('card').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tap()}};
-$('guess').onchange=()=>{if(cur)setRevealed(!$('guess').checked)};
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='Enter'&&e.target===document.body)next()});
+document.body.onclick=next;
+document.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='Enter'||ev.key==='ArrowRight'){ev.preventDefault();next()}});
 </script>
 </body>
 </html>
