@@ -44,7 +44,7 @@ let deck=[],last=null,busy=false,muted=false,ac=null,parts=[],raf=0;
 /* ---------- sound ---------- */
 function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(_){}}if(ac&&ac.state==='suspended')ac.resume();return ac}
 function tone(f,t0,d,type='square',v=.12){
-  if(muted||!ac)return;const o=ac.createOscillator(),g=ac.createGain();
+  const k=window.Vol?Vol.get():1;if(muted||!ac||!k)return;v*=k;const o=ac.createOscillator(),g=ac.createGain();
   o.type=type;o.frequency.value=f;o.connect(g);g.connect(ac.destination);
   const t=ac.currentTime+t0;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d+.02);
 }
@@ -110,8 +110,11 @@ document.body.onclick=ev=>{if(ev.target.id!=='mute')spin()};
 document.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='Enter'||ev.key==='ArrowRight'){ev.preventDefault();spin()}});
 $('mute').onclick=ev=>{ev.stopPropagation();muted=!muted;$('mute').textContent=muted?'🔇':'🔊'};
 </script>
+<script src="../shared/vol.js"></script>
+<script src="../shared/bgm.js"></script>
 <script src="../shared/remote-client.js"></script>
 <script>
+if(window.BGM)BGM.init({allow:()=>true});
 if(window.Remote)Remote.init({id:'animal-random',needsSound:true,
   getUi:()=>({title:'สุ่มสัตว์',info:busy?'กำลังสุ่ม…':'พร้อมสุ่ม',buttons:[{t:'สุ่มสัตว์',cmd:'spin',ico:'play',k:'go'}]}),
   onCmd:c=>{if(c.cmd==='spin')spin()}});
