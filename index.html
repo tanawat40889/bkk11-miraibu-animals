@@ -110,5 +110,11 @@ document.body.onclick=ev=>{if(ev.target.id!=='mute')spin()};
 document.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='Enter'||ev.key==='ArrowRight'){ev.preventDefault();spin()}});
 $('mute').onclick=ev=>{ev.stopPropagation();muted=!muted;$('mute').textContent=muted?'🔇':'🔊'};
 </script>
+<script src="../shared/remote-client.js"></script>
+<script>
+if(window.Remote)Remote.init({id:'animal-random',needsSound:true,
+  getUi:()=>({title:'สุ่มสัตว์',info:busy?'กำลังสุ่ม…':'พร้อมสุ่ม',buttons:[{t:'สุ่มสัตว์',cmd:'spin',ico:'play',k:'go'}]}),
+  onCmd:c=>{if(c.cmd==='spin')spin()}});
+</script>
 </body>
 </html>
